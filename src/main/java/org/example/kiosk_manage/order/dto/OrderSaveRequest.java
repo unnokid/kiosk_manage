@@ -14,5 +14,6 @@ public class OrderSaveRequest {
 
     private String email;
     private int paidAmount;
+    private String payment;
     private List<OrderCartSaveRequest> carts;
 }

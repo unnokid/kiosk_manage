@@ -11,6 +11,7 @@ import org.example.kiosk_manage.menu.domain.Menu;
 import org.example.kiosk_manage.menu.domain.MenuOption;
 import org.example.kiosk_manage.menu.repository.MenuRepository;
 import org.example.kiosk_manage.order.domain.Order;
+import org.example.kiosk_manage.order.domain.Payment;
 import org.example.kiosk_manage.order.dto.*;
 import org.example.kiosk_manage.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,7 @@ public class OrderService {
                 .admin(admin)
                 .orderNo(nextNo)
                 .paidAmount(request.getPaidAmount())
+                .payment(Payment.valueOf(request.getPayment()))
                 .cartList(new ArrayList<>())
                 .build();
 

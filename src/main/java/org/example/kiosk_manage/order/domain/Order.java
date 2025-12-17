@@ -27,6 +27,8 @@ public class Order extends BaseEntity {
 
     private String status;
 
+    private Payment payment;
+
     private int total_amount;
 
     private int paidAmount;
