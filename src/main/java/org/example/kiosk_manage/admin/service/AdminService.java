@@ -109,6 +109,7 @@ public class AdminService {
 
                     return new OrderSummaryDto(
                             order.getOrderNo(),
+                            order.getPayment().getValue(),
                             order.getCreateDate().toString(),
                             order.getStatus(),
                             order.getTotal_amount(),

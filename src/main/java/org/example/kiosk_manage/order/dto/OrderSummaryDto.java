@@ -13,6 +13,7 @@ public class OrderSummaryDto {
     private int orderNo;
     private String createDate;
     private String status;
+    private String payment;
     private int total_amount;
     private int paidAmount;
     private List<OrderMenuDto> menuList;
