@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.kiosk_manage.donation.domain.Donation;
+import org.example.kiosk_manage.order.domain.Payment;
 import org.example.kiosk_manage.order.dto.OrderSummaryDto;
 
 import java.util.List;
@@ -16,6 +17,9 @@ public class AdminSummaryResponse {
 
     private int totalAmount;
     private int totalCount;
+
+    private Map<Payment,Long> paymentCount;
+    private Map<Payment,Long> paymentAmount;
 
     private int totalDonationCount;
     private int totalDonationAmount;

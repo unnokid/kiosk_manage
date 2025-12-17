@@ -10,6 +10,7 @@ import org.example.kiosk_manage.common.Validation;
 import org.example.kiosk_manage.common.exception.BadRequestException;
 import org.example.kiosk_manage.donation.domain.Donation;
 import org.example.kiosk_manage.order.domain.Order;
+import org.example.kiosk_manage.order.domain.Payment;
 import org.example.kiosk_manage.order.dto.OrderMenuDto;
 import org.example.kiosk_manage.order.dto.OrderSummaryDto;
 import org.springframework.stereotype.Service;
@@ -63,17 +64,25 @@ public class AdminService {
         int totalDonationAmount = donationList.stream()
                 .mapToInt(Donation::getAmount).sum();
 
-        /*
-        List<Order> orderList = admin.getOrderList();
-        int totalOrderCount = orderList.size();
-        int totalOrderPrice = orderList.stream()
-                .mapToInt(order -> Math.max(order.getTotal_amount(), order.getPaidAmount())).sum();
-        */
         List<Order> orderEntityList = admin.getOrderList();
         int totalOrderCount = orderEntityList.size();
         int totalOrderPrice = orderEntityList.stream()
                 .mapToInt(order -> Math.max(order.getTotal_amount(), order.getPaidAmount()))
                 .sum();
+
+        Map<Payment, Long> paymentAmountMap = orderEntityList.stream()
+                .collect(Collectors.groupingBy(
+                        o -> o.getPayment() != null ? o.getPayment() : Payment.ETC, // null 방어
+                        Collectors.summingLong(o -> Math.max(o.getTotal_amount(), o.getPaidAmount()))
+                ));
+
+        // (선택) 결제방식별 건수도 같이
+        Map<Payment, Long> paymentCountMap = orderEntityList.stream()
+                .collect(Collectors.groupingBy(
+                        o -> o.getPayment() != null ? o.getPayment() : Payment.ETC,
+                        Collectors.counting()
+                ));
+
 
         List<OrderSummaryDto> orderList = orderEntityList.stream()
                 .map(order -> {
@@ -142,6 +151,8 @@ public class AdminService {
                         .builder()
                         .totalCount(totalDonationCount + totalOrderCount)
                         .totalAmount(totalDonationAmount + totalOrderPrice)
+                        .paymentCount(paymentCountMap)
+                        .paymentAmount(paymentAmountMap)
                         .totalDonationCount(totalDonationCount)
                         .totalDonationAmount(totalDonationAmount)
                         .donationList(donationList)
