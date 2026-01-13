@@ -25,6 +25,8 @@ public class MenuOption extends BaseEntity {
 
     private int optionPrice;
 
+    private boolean active = true;
+
     @ManyToOne
     @JoinColumn(name = "menu_id")
     private Menu menu;
@@ -46,4 +48,8 @@ public class MenuOption extends BaseEntity {
     public void addCartOption(CartOption cartOption) {
         this.cartOptionList.add(cartOption);
     }
+
+
+    public void deactivate() { this.active = false; }
+    public void activate() { this.active = true; }
 }

@@ -9,5 +9,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MenuRepository extends JpaRepository<Menu,Long>, MenuRepositoryCustom {
-    List<Menu> findMenusByCategory(Category category);
+    List<Menu> findMenusByCategoryAndActiveTrue(Category category);
 }

@@ -97,8 +97,12 @@ public class MenuService {
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("삭제요청된 메뉴는 존재하지 않습니다."));
 
-        //주문이 존재할경우 메뉴 삭제 불가
-        menuRepository.delete(target);
+        //주문이 존재할 수 있기에 soft delete
+        target.deactivate();
+
+        target.getMenuOptionList().forEach(MenuOption::deactivate);
+
+        menuRepository.save(target);
 
     }
 
@@ -111,7 +115,7 @@ public class MenuService {
 
         List<MenuDto> menuDtoList = new ArrayList<>();
         for (Category category : categories){
-            List<Menu> menuList = menuRepository.findMenusByCategory(category);
+            List<Menu> menuList = menuRepository.findMenusByCategoryAndActiveTrue(category);
 
             menuDtoList.addAll(
                 menuList.stream()
@@ -121,7 +125,11 @@ public class MenuService {
                                     .name(menu.getName())
                                     .category(menu.getCategory().getName())
                                     .price(menu.getPrice())
-                                    .options(Converter.toMenuOptionDtos(menu.getMenuOptionList()))
+                                    .options( Converter.toMenuOptionDtos(
+                                            menu.getMenuOptionList().stream()
+                                                    .filter(MenuOption::isActive)
+                                                    .toList()
+                                    ))
                                     .build()
                         ).toList()
             );

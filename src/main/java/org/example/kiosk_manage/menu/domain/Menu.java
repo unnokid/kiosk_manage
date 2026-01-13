@@ -27,6 +27,8 @@ public class Menu extends BaseEntity {
 
     private int remain;
 
+    private boolean active = true;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
@@ -63,4 +65,7 @@ public class Menu extends BaseEntity {
         }
         return false;
     }
+
+    public void deactivate() { this.active = false; }
+    public void activate() { this.active = true; }
 }
