@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.example.kiosk_manage.admin.domain.Admin;
 import org.example.kiosk_manage.common.BaseEntity;
-import org.example.kiosk_manage.donation.domain.Donation;
 import org.example.kiosk_manage.menu.domain.Menu;
 
 import java.util.List;
@@ -32,6 +31,8 @@ public class Category extends BaseEntity {
     @JsonIgnore
     private Admin admin;
 
+    private boolean active = true;
+
     public void addMenu(Menu menu) {
         this.menuList.add(menu);
     }
@@ -45,5 +46,13 @@ public class Category extends BaseEntity {
         }
         admin.addCategory(this);
         this.admin = admin;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void activate() {
+        this.active = true;
     }
 }

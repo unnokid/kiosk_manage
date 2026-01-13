@@ -33,7 +33,7 @@ public class CategoryService {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
-        return categoryRepository.findCategoriesByAdmin(admin)
+        return categoryRepository.findCategoriesByAdminAndActiveTrue(admin)
                 .stream()
                 .map(category -> CategoryDto.builder()
                         .id(category.getId())
@@ -56,6 +56,7 @@ public class CategoryService {
 
         categoryRepository.save(Category.builder()
                 .name(request.getName())
+                .active(true)
                 .admin(admin)
                 .build());
     }
@@ -75,6 +76,8 @@ public class CategoryService {
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("해당 카테고리는 존재하지 않습니다."));
 
-        categoryRepository.delete(category);
+        category.deactivate();
+
+        categoryRepository.save(category);
     }
 }

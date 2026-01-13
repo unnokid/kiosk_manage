@@ -65,6 +65,7 @@ public class MenuService {
                 .name(request.getName())
                 .price(request.getPrice())
                 .remain(request.getCount())
+                .active(true)
                 .category(category)
                 .menuOptionList(new ArrayList<>())
                 .build();
@@ -75,6 +76,7 @@ public class MenuService {
                     .builder()
                     .optionName(m.getOption())
                     .optionPrice(m.getOptionPrice())
+                    .active(true)
                     .menu(menu)
                     .build();
             menu.addMenuOption(menuOption);
@@ -111,7 +113,7 @@ public class MenuService {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
-        List<Category> categories = categoryRepository.findCategoriesByAdmin(admin);
+        List<Category> categories = categoryRepository.findCategoriesByAdminAndActiveTrue(admin);
 
         List<MenuDto> menuDtoList = new ArrayList<>();
         for (Category category : categories){

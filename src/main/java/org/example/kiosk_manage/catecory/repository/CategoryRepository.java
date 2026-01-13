@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long>, CategoryRepositoryCustom {
-    List<Category> findCategoriesByAdmin(Admin admin);
+    List<Category> findCategoriesByAdminAndActiveTrue(Admin admin);
 }
