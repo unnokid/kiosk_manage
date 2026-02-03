@@ -48,7 +48,6 @@ public class OrderService {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
-        //int nextNo = orderRepository.findMaxOrderNoByAdmin(admin).orElse(0) + 1;
         AdminOrderSeq seq = adminOrderSeqRepository.findForUpdate(admin.getId())
                 .orElseGet(() -> adminOrderSeqRepository.saveAndFlush(new AdminOrderSeq(admin.getId(), 1)));
         int nextNo = seq.issue();
@@ -71,8 +70,6 @@ public class OrderService {
 
             //메뉴가격
             int price = menu.getPrice();
-
-            System.out.println(Collections.unmodifiableList(c.getCartOptions()));
 
             Set<String> cartOptions = c.getCartOptions().stream()
                     .map(CartOptionRequest::getOptionName)

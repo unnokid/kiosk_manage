@@ -9,12 +9,15 @@ import org.example.kiosk_manage.cart.domain.Cart;
 import org.example.kiosk_manage.common.Validation;
 import org.example.kiosk_manage.common.exception.BadRequestException;
 import org.example.kiosk_manage.donation.domain.Donation;
+import org.example.kiosk_manage.donation.repository.DonationRepository;
 import org.example.kiosk_manage.order.domain.Order;
 import org.example.kiosk_manage.order.domain.Payment;
 import org.example.kiosk_manage.order.dto.OrderMenuDto;
 import org.example.kiosk_manage.order.dto.OrderSummaryDto;
+import org.example.kiosk_manage.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +28,14 @@ public class AdminService {
 
     private final AdminRepository adminRepository;
 
-    public AdminService(AdminRepository adminRepository) {
+    private final OrderRepository orderRepository;
+
+    private final DonationRepository donationRepository;
+
+    public AdminService(AdminRepository adminRepository, OrderRepository orderRepository, DonationRepository donationRepository) {
         this.adminRepository = adminRepository;
+        this.orderRepository = orderRepository;
+        this.donationRepository = donationRepository;
     }
 
     public void save(AdminSignupRequest request) {
@@ -55,16 +64,18 @@ public class AdminService {
         }
     }
 
-    public AdminSummaryResponse summary(String email) {
+    public AdminSummaryResponse summary(String email, LocalDate date) {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
 
-        List<Donation> donationList = admin.getDonationList();
+        //List<Donation> donationList = admin.getDonationList();
+        List<Donation> donationList = donationRepository.findByAdminIdAndDate(admin.getId(),date);
         int totalDonationCount = donationList.size();
         int totalDonationAmount = donationList.stream()
                 .mapToInt(Donation::getAmount).sum();
 
-        List<Order> orderEntityList = admin.getOrderList();
+        //List<Order> orderEntityList = admin.getOrderList();
+        List<Order> orderEntityList = orderRepository.findByAdminIdAndDate(admin.getId(),date);
         int totalOrderCount = orderEntityList.size();
         int totalOrderPrice = orderEntityList.stream()
                 .mapToInt(order -> Math.max(order.getTotal_amount(), order.getPaidAmount()))
@@ -78,6 +89,8 @@ public class AdminService {
 
         // (선택) 결제방식별 건수도 같이
         Map<Payment, Long> paymentCountMap = orderEntityList.stream()
+                .filter(o -> o.getCreateDate() != null
+                        && o.getCreateDate().toLocalDate().equals(date))
                 .collect(Collectors.groupingBy(
                         o -> o.getPayment() != null ? o.getPayment() : Payment.ETC,
                         Collectors.counting()
@@ -121,24 +134,25 @@ public class AdminService {
 
 
         Map<String, Long> result = admin.getOrderList().stream()
+                .filter(order -> order.getCreateDate() != null
+                        && order.getCreateDate().toLocalDate().equals(date))
                 .flatMap(order -> order.getCartList().stream())
                 .collect(Collectors.groupingBy(
                         cart -> {
                             String menuName = cart.getMenu().getName();
-                            String optionName = cart.getCartOptionList().get(0) != null
+                            String optionName = (cart.getCartOptionList() != null
+                                    && !cart.getCartOptionList().isEmpty()
+                                    && cart.getCartOptionList().get(0) != null
+                                    && cart.getCartOptionList().get(0).getMenuOption() != null)
                                     ? cart.getCartOptionList().get(0).getMenuOption().getOptionName()
                                     : "";
-                            return optionName.isEmpty()
-                                    ? menuName
-                                    : menuName + " (" + optionName + ")";
+                            return optionName.isEmpty() ? menuName : menuName + " (" + optionName + ")";
                         },
                         Collectors.summingLong(Cart::getQuantity)
                 ))
                 .entrySet().stream()
-                .sorted(
-                        Map.Entry.<String, Long>comparingByValue().reversed()
-                                .thenComparing(Map.Entry.comparingByKey())   // 수량 같으면 이름순
-                )
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed()
+                        .thenComparing(Map.Entry.comparingByKey()))
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,

@@ -4,8 +4,11 @@ import org.example.kiosk_manage.admin.dto.AdminLoginRequest;
 import org.example.kiosk_manage.admin.dto.AdminSignupRequest;
 import org.example.kiosk_manage.admin.dto.AdminSummaryResponse;
 import org.example.kiosk_manage.admin.service.AdminService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -41,9 +44,12 @@ public class AdminController {
 
     //일일 판매 기록 조회
     @GetMapping("/summary")
-    public ResponseEntity<AdminSummaryResponse> summary(@RequestParam String email) {
+    public ResponseEntity<AdminSummaryResponse> summary(@RequestParam String email,  @RequestParam(required = false) @DateTimeFormat(pattern = "yyyyMMdd")LocalDate date) {
         System.out.println("-------------------------- 일일정산 호출");
-        AdminSummaryResponse summary = adminService.summary(email);
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now(); // 기본 오늘
+        AdminSummaryResponse summary = adminService.summary(email, targetDate);
+
         return ResponseEntity.ok(summary);
     }
 
