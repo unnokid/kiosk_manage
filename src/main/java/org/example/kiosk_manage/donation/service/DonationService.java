@@ -32,8 +32,13 @@ public class DonationService {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
+        // ✅ 먼저 “없으면 생성(있으면 무시)”을 원자적으로 처리
+        adminDonationSeqRepository.initIfAbsent(admin.getId());
+
+        // ✅ 그 다음 락 잡고 증가
         AdminDonationSeq seq = adminDonationSeqRepository.findForUpdate(admin.getId())
-                .orElseGet(() -> adminDonationSeqRepository.saveAndFlush(new AdminDonationSeq(admin.getId(), 1)));
+                .orElseThrow(); // 여기서 없어지면 이상한 케이스
+
         int nextNo = seq.issue();
 
         donationRepository.save(Donation.builder()

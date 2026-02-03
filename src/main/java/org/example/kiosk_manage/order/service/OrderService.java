@@ -48,8 +48,9 @@ public class OrderService {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
-        AdminOrderSeq seq = adminOrderSeqRepository.findForUpdate(admin.getId())
-                .orElseGet(() -> adminOrderSeqRepository.saveAndFlush(new AdminOrderSeq(admin.getId(), 1)));
+        adminOrderSeqRepository.initIfAbsent(admin.getId());
+
+        AdminOrderSeq seq = adminOrderSeqRepository.findForUpdate(admin.getId()).orElseThrow();
         int nextNo = seq.issue();
 
 
