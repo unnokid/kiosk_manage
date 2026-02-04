@@ -13,5 +13,4 @@ public class DonationSaveRequest {
     private String email;
     private String name;
     private int amount;
-    private String reason;
 }

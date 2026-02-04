@@ -2,7 +2,6 @@ package org.example.kiosk_manage.donation.service;
 
 import org.example.kiosk_manage.admin.domain.Admin;
 import org.example.kiosk_manage.admin.domain.AdminDonationSeq;
-import org.example.kiosk_manage.admin.domain.AdminOrderSeq;
 import org.example.kiosk_manage.admin.repository.AdminDonationSeqRepository;
 import org.example.kiosk_manage.admin.repository.AdminRepository;
 import org.example.kiosk_manage.common.exception.BadRequestException;
@@ -45,7 +44,6 @@ public class DonationService {
                 .donationNo(nextNo)
                 .name(request.getName())
                 .amount(request.getAmount())
-                .reason(request.getReason())
                 .admin(admin)
                 .build());
     }
