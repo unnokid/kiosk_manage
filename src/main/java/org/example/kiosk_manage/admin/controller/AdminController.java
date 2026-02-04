@@ -1,8 +1,6 @@
 package org.example.kiosk_manage.admin.controller;
 
-import org.example.kiosk_manage.admin.dto.AdminLoginRequest;
-import org.example.kiosk_manage.admin.dto.AdminSignupRequest;
-import org.example.kiosk_manage.admin.dto.AdminSummaryResponse;
+import org.example.kiosk_manage.admin.dto.*;
 import org.example.kiosk_manage.admin.service.AdminService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -44,11 +42,31 @@ public class AdminController {
 
     //일일 판매 기록 조회
     @GetMapping("/summary")
-    public ResponseEntity<AdminSummaryResponse> summary(@RequestParam String email,  @RequestParam(required = false) @DateTimeFormat(pattern = "yyyyMMdd")LocalDate date) {
-        System.out.println("-------------------------- 일일정산 호출");
+    public ResponseEntity<AdminSummaryResponse> mainSummary(@RequestParam String email,  @RequestParam(required = false) @DateTimeFormat(pattern = "yyyyMMdd")LocalDate date) {
+        System.out.println("-------------------------- 총 일일정산 호출");
 
         LocalDate targetDate = (date != null) ? date : LocalDate.now(); // 기본 오늘
         AdminSummaryResponse summary = adminService.summary(email, targetDate);
+
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/order")
+    public ResponseEntity<AdminOrderSummaryResponse> orderSummary(@RequestParam String email, @RequestParam(required = false) @DateTimeFormat(pattern = "yyyyMMdd")LocalDate date) {
+        System.out.println("-------------------------- 주문 일일정산 호출");
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now(); // 기본 오늘
+        AdminOrderSummaryResponse summary = adminService.orderSummary(email, targetDate);
+
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/summary/donation")
+    public ResponseEntity<AdminDonationSummaryResponse> donationSummary(@RequestParam String email, @RequestParam(required = false) @DateTimeFormat(pattern = "yyyyMMdd")LocalDate date) {
+        System.out.println("-------------------------- 찬조 일일정산 호출");
+
+        LocalDate targetDate = (date != null) ? date : LocalDate.now(); // 기본 오늘
+        AdminDonationSummaryResponse summary = adminService.donationSummary(email, targetDate);
 
         return ResponseEntity.ok(summary);
     }

@@ -1,9 +1,7 @@
 package org.example.kiosk_manage.admin.service;
 
 import org.example.kiosk_manage.admin.domain.Admin;
-import org.example.kiosk_manage.admin.dto.AdminLoginRequest;
-import org.example.kiosk_manage.admin.dto.AdminSignupRequest;
-import org.example.kiosk_manage.admin.dto.AdminSummaryResponse;
+import org.example.kiosk_manage.admin.dto.*;
 import org.example.kiosk_manage.admin.repository.AdminRepository;
 import org.example.kiosk_manage.cart.domain.Cart;
 import org.example.kiosk_manage.common.Validation;
@@ -170,12 +168,79 @@ public class AdminService {
                         .paymentAmount(paymentAmountMap)
                         .totalDonationCount(totalDonationCount)
                         .totalDonationAmount(totalDonationAmount)
-                        .donationList(donationList)
                         .totalOrderCount(totalOrderCount)
                         .totalOrderPrice(totalOrderPrice)
-                        .orderList(orderList)
                         .menuCountMap(result)
                         .build();
 
+    }
+
+    public AdminOrderSummaryResponse orderSummary(String email, LocalDate date) {
+        Admin admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
+        List<Order> orderEntityList = orderRepository.findByAdminIdAndDate(admin.getId(),date);
+        int totalOrderCount = orderEntityList.size();
+        int totalOrderPrice = orderEntityList.stream()
+                .mapToInt(order -> Math.max(order.getTotal_amount(), order.getPaidAmount()))
+                .sum();
+
+        List<OrderSummaryDto> orderList = orderEntityList.stream()
+                .map(order -> {
+                    List<OrderMenuDto> menuList = order.getCartList().stream()
+                            .map(cart -> {
+                                String menuName = cart.getMenu().getName();
+                                String optionName = null;
+                                if (cart.getCartOptionList() != null
+                                        && !cart.getCartOptionList().isEmpty()
+                                        && cart.getCartOptionList().get(0) != null
+                                        && cart.getCartOptionList().get(0).getMenuOption() != null) {
+                                    optionName = cart.getCartOptionList()
+                                            .get(0)
+                                            .getMenuOption()
+                                            .getOptionName();
+                                }
+                                return new OrderMenuDto(
+                                        menuName,
+                                        optionName,
+                                        cart.getQuantity()
+                                );
+                            })
+                            .toList();
+
+                    return new OrderSummaryDto(
+                            order.getOrderNo(),
+                            order.getCreateDate().toString(),
+                            order.getStatus(),
+                            order.getPayment().getValue(),
+                            order.getTotal_amount(),
+                            order.getPaidAmount(),
+                            menuList
+                    );
+                })
+                .toList();
+
+        return AdminOrderSummaryResponse
+                .builder()
+                .totalOrderCount(totalOrderCount)
+                .totalOrderPrice(totalOrderPrice)
+                .orderList(orderList)
+                .build();
+    }
+
+    public AdminDonationSummaryResponse donationSummary(String email, LocalDate date) {
+        Admin admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
+
+        List<Donation> donationList = donationRepository.findByAdminIdAndDate(admin.getId(),date);
+        int totalDonationCount = donationList.size();
+        int totalDonationAmount = donationList.stream()
+                .mapToInt(Donation::getAmount).sum();
+
+        return AdminDonationSummaryResponse
+                .builder()
+                .totalDonationCount(totalDonationCount)
+                .totalDonationAmount(totalDonationAmount)
+                .donationList(donationList)
+                .build();
     }
 }
