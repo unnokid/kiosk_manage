@@ -131,9 +131,7 @@ public class AdminService {
                 .toList();
 
 
-        Map<String, Long> result = admin.getOrderList().stream()
-                .filter(order -> order.getCreateDate() != null
-                        && order.getCreateDate().toLocalDate().equals(date))
+        Map<String, Long> result = orderEntityList.stream()
                 .flatMap(order -> order.getCartList().stream())
                 .collect(Collectors.groupingBy(
                         cart -> {
