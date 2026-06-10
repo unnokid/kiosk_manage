@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order,Long>, OrderRepositoryCustom {
-    @Query("select max(o.orderNo) from Order o where o.admin = :admin")
-    Optional<Integer> findMaxOrderNoByAdmin(@Param("admin") Admin admin);
+
+    @Query("select o from Order o where o.admin.id = :adminId  and function('date', o.createDate) = :date")
+    List<Order> findByAdminIdAndDate(@Param("adminId") Long adminId, @Param("date") LocalDate date);
 }

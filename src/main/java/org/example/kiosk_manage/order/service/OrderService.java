@@ -1,6 +1,8 @@
 package org.example.kiosk_manage.order.service;
 
 import org.example.kiosk_manage.admin.domain.Admin;
+import org.example.kiosk_manage.admin.domain.AdminOrderSeq;
+import org.example.kiosk_manage.admin.repository.AdminOrderSeqRepository;
 import org.example.kiosk_manage.admin.repository.AdminRepository;
 import org.example.kiosk_manage.cart.domain.Cart;
 import org.example.kiosk_manage.cart.domain.CartOption;
@@ -30,16 +32,14 @@ public class OrderService {
     private final AdminRepository adminRepository;
     private final MenuRepository menuRepository;
     private final OrderRepository orderRepository;
-    private final CartRepository cartRepository;
 
-    private final CartOptionRepository cartOptionRepository;
+    private final AdminOrderSeqRepository adminOrderSeqRepository;
 
-    public OrderService(AdminRepository adminRepository, MenuRepository menuRepository, OrderRepository orderRepository, CartRepository cartRepository, CartOptionRepository cartOptionRepository) {
+    public OrderService(AdminRepository adminRepository, MenuRepository menuRepository, OrderRepository orderRepository, AdminOrderSeqRepository adminOrderSeqRepository) {
         this.adminRepository = adminRepository;
         this.menuRepository = menuRepository;
         this.orderRepository = orderRepository;
-        this.cartRepository = cartRepository;
-        this.cartOptionRepository = cartOptionRepository;
+        this.adminOrderSeqRepository = adminOrderSeqRepository;
     }
 
     @Transactional
@@ -48,8 +48,10 @@ public class OrderService {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
-        int nextNo = orderRepository.findMaxOrderNoByAdmin(admin)
-                .orElse(0) + 1;
+        adminOrderSeqRepository.initIfAbsent(admin.getId());
+
+        AdminOrderSeq seq = adminOrderSeqRepository.findForUpdate(admin.getId()).orElseThrow();
+        int nextNo = seq.issue();
 
 
         //Order 객체 생성
@@ -69,8 +71,6 @@ public class OrderService {
 
             //메뉴가격
             int price = menu.getPrice();
-
-            System.out.println(Collections.unmodifiableList(c.getCartOptions()));
 
             Set<String> cartOptions = c.getCartOptions().stream()
                     .map(CartOptionRequest::getOptionName)

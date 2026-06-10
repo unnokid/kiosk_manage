@@ -26,8 +26,6 @@ public class Donation extends BaseEntity {
 
     private int amount;
 
-    private String reason;
-
     @ManyToOne
     @JoinColumn(name = "admin_id")
     @JsonIgnore

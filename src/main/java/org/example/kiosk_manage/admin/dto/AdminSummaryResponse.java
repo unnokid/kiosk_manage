@@ -23,11 +23,9 @@ public class AdminSummaryResponse {
 
     private int totalDonationCount;
     private int totalDonationAmount;
-    private List<Donation> donationList;
 
     private int totalOrderCount;
     private int totalOrderPrice;
     private Map<String, Long> menuCountMap;
-    private List<OrderSummaryDto> orderList;
 
 }
