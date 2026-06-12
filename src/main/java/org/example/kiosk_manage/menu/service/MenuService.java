@@ -49,6 +49,7 @@ public class MenuService {
 
         boolean check = admin.getCategoryList().stream()
                 .flatMap(category -> category.getMenuList().stream())
+                .filter(Menu::isActive)
                 .anyMatch(menu -> menu.getName().equals(request.getName()));
 
         //메뉴중복 체크

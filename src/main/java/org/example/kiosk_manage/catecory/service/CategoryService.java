@@ -11,6 +11,7 @@ import org.example.kiosk_manage.catecory.dto.CategorySaveRequest;
 import org.example.kiosk_manage.catecory.repository.CategoryRepository;
 import org.example.kiosk_manage.common.exception.BadRequestException;
 import org.example.kiosk_manage.donation.domain.Donation;
+import org.example.kiosk_manage.menu.domain.Menu;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class CategoryService {
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
         boolean check = admin.getCategoryList().stream()
+                .filter(Category::isActive)
                 .anyMatch(category -> category.getName().equals(request.getName()));
 
         if (check) {
@@ -66,14 +68,16 @@ public class CategoryService {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
-        if(admin.getCategoryList().isEmpty()){
-            throw new IllegalStateException("삭제 불가: 메뉴가 존재합니다.");
-        }
-
         Category category = admin.getCategoryList().stream()
                 .filter(o -> o.getId().equals(request.getCategoryId()))
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("해당 카테고리는 존재하지 않습니다."));
+
+        boolean hasActiveMenus = category.getMenuList().stream()
+                .anyMatch(Menu::isActive);
+        if (hasActiveMenus) {
+            throw new IllegalStateException("삭제 불가: 메뉴가 존재합니다.");
+        }
 
         category.deactivate();
 
