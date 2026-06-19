@@ -7,6 +7,7 @@ import org.example.kiosk_manage.common.BaseEntity;
 import org.example.kiosk_manage.donation.domain.Donation;
 import org.example.kiosk_manage.order.domain.Order;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -28,13 +29,16 @@ public class Admin extends BaseEntity {
     private String name;
 
     @OneToMany(mappedBy = "admin")
-    private List<Donation> donationList;
+    @Builder.Default
+    private List<Donation> donationList = new ArrayList<>();
 
     @OneToMany(mappedBy = "admin")
-    private List<Order> orderList;
+    @Builder.Default
+    private List<Order> orderList = new ArrayList<>();
 
     @OneToMany(mappedBy = "admin")
-    private List<Category> categoryList;
+    @Builder.Default
+    private List<Category> categoryList = new ArrayList<>();
 
 
     public boolean matchPassword(String password){

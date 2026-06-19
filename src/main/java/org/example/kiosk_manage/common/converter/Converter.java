@@ -14,7 +14,7 @@ public class Converter {
 
         return MenuOptionDto.builder()
                 .id(menuOption.getId())
-                .menuId(menuOption.getMenu().getId())
+                .menuId(menuOption.getMenu() != null ? menuOption.getMenu().getId() : null)
                 .optionName(menuOption.getOptionName())
                 .price(menuOption.getOptionPrice())
                 .build();

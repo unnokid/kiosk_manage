@@ -43,6 +43,7 @@ public class CategoryService {
 
     }
 
+    @Transactional
     public void plus(CategorySaveRequest request) {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));

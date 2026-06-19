@@ -7,6 +7,7 @@ import org.example.kiosk_manage.admin.domain.Admin;
 import org.example.kiosk_manage.common.BaseEntity;
 import org.example.kiosk_manage.menu.domain.Menu;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,7 +25,8 @@ public class Category extends BaseEntity {
     private String name;
 
     @OneToMany(mappedBy = "category")
-    private List<Menu> menuList;
+    @Builder.Default
+    private List<Menu> menuList = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "admin_id")
@@ -42,7 +44,7 @@ public class Category extends BaseEntity {
             throw new RuntimeException();
         }
         if (this.admin != null) {
-            this.admin.getDonationList().remove(this);
+            this.admin.getCategoryList().remove(this);
         }
         admin.addCategory(this);
         this.admin = admin;

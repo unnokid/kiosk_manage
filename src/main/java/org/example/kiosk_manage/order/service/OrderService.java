@@ -60,7 +60,7 @@ public class OrderService {
                 .admin(admin)
                 .orderNo(nextNo)
                 .paidAmount(request.getPaidAmount())
-                .payment(Payment.valueOf(request.getPayment()))
+                .payment(parsePayment(request.getPayment()))
                 .cartList(new ArrayList<>())
                 .build();
 
@@ -93,14 +93,13 @@ public class OrderService {
             cart.addOrder(order);
             cart.addMenu(menu);
 
-            //cart <-> cartOption 연관관계
-            CartOption cartOption = CartOption.builder().build();
-            cartOption.addCart(cart);
-
+            //cart <-> cartOption 연관관계 (옵션 하나당 CartOption 1개)
             List<MenuOption> collect = menu.getMenuOptionList().stream()
                     .filter(option -> cartOptions.contains(option.getOptionName()))
                     .toList();
             for (MenuOption menuOption : collect) {
+                CartOption cartOption = CartOption.builder().build();
+                cartOption.addCart(cart);
                 cartOption.addMenuOption(menuOption);
             }
         }
@@ -116,6 +115,14 @@ public class OrderService {
                 .orderNo(or.getOrderNo())
                 .createdt(or.getCreateDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build();
+    }
+
+    private Payment parsePayment(String value) {
+        try {
+            return Payment.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("유효하지 않은 결제 수단입니다: " + value + " (가능한 값: KKP, CASH, ETC)");
+        }
     }
 
     @Transactional

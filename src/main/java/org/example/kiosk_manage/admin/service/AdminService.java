@@ -14,6 +14,7 @@ import org.example.kiosk_manage.order.dto.OrderMenuDto;
 import org.example.kiosk_manage.order.dto.OrderSummaryDto;
 import org.example.kiosk_manage.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -62,6 +63,7 @@ public class AdminService {
         }
     }
 
+    @Transactional(readOnly = true)
     public AdminSummaryResponse summary(String email, LocalDate date) {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
@@ -90,7 +92,7 @@ public class AdminService {
                 .filter(o -> o.getCreateDate() != null
                         && o.getCreateDate().toLocalDate().equals(date))
                 .collect(Collectors.groupingBy(
-                        o -> o.getPayment() != null ? o.getPayment() : Payment.ETC,
+                         o -> o.getPayment() != null ? o.getPayment() : Payment.ETC,
                         Collectors.counting()
                 ));
 
@@ -122,7 +124,7 @@ public class AdminService {
                             order.getOrderNo(),
                             order.getCreateDate().toString(),
                             order.getStatus(),
-                            order.getPayment().getValue(),
+                            order.getPayment() != null ? order.getPayment().getValue() : Payment.ETC.getValue(),
                             order.getTotal_amount(),
                             order.getPaidAmount(),
                             menuList
@@ -173,6 +175,7 @@ public class AdminService {
 
     }
 
+    @Transactional(readOnly = true)
     public AdminOrderSummaryResponse orderSummary(String email, LocalDate date) {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
@@ -209,7 +212,7 @@ public class AdminService {
                             order.getOrderNo(),
                             order.getCreateDate().toString(),
                             order.getStatus(),
-                            order.getPayment().getValue(),
+                            order.getPayment() != null ? order.getPayment().getValue() : Payment.ETC.getValue(),
                             order.getTotal_amount(),
                             order.getPaidAmount(),
                             menuList
@@ -225,6 +228,7 @@ public class AdminService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public AdminDonationSummaryResponse donationSummary(String email, LocalDate date) {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));

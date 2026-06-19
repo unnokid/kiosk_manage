@@ -59,7 +59,7 @@ public class Menu extends BaseEntity {
     }
 
     public boolean minus(int count) {
-        if (this.remain > count) {
+        if (this.remain >= count) {
             this.remain -= count;
             return true;
         }

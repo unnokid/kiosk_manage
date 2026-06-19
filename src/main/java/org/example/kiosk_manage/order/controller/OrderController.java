@@ -4,6 +4,7 @@ import org.example.kiosk_manage.order.dto.OrderDeleteRequest;
 import org.example.kiosk_manage.order.dto.OrderSaveRequest;
 import org.example.kiosk_manage.order.dto.OrderSaveResponse;
 import org.example.kiosk_manage.order.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +22,7 @@ public class OrderController {
     }
 
     @PostMapping("/plus")
-    public ResponseEntity<OrderSaveResponse> plus(@RequestBody OrderSaveRequest request) {
+    public ResponseEntity<OrderSaveResponse> plus(@RequestBody @Valid OrderSaveRequest request) {
         OrderSaveResponse response = orderService.plus(request);
 
         return ResponseEntity.ok(response);
