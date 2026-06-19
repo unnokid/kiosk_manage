@@ -68,6 +68,9 @@ public class OrderService {
             //메뉴 데이터
             Menu menu = menuRepository.findById(c.getMenuId())
                     .orElseThrow(() -> new BadRequestException("해당 메뉴는 존재하지 않습니다."));
+            if (!menu.isActive()) {
+                throw new BadRequestException("삭제된 메뉴는 주문할 수 없습니다.");
+            }
 
             //메뉴가격
             int price = menu.getPrice();
