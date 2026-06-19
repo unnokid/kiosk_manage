@@ -65,4 +65,8 @@ public class Order extends BaseEntity {
         this.total_amount += amount;
     }
 
+    public void cancel() {
+        this.status = "N";
+    }
+
 }

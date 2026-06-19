@@ -139,8 +139,7 @@ public class OrderService {
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("해당 주문기록은 존재하지 않습니다."));
 
-
-        orderRepository.delete(target);
+        target.cancel();
     }
 
 }
