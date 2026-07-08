@@ -96,8 +96,8 @@ public class AdminService {
                         Collectors.counting()
                 ));
 
-
-        List<OrderSummaryDto> orderList = orderEntityList.stream()
+        List<Order> allOrderList = orderRepository.findAllByAdminIdAndDate(admin.getId(), date);
+        List<OrderSummaryDto> orderList = allOrderList.stream()
                 .map(order -> {
                     List<OrderMenuDto> menuList = order.getCartList().stream()
                             .map(cart -> {
@@ -185,7 +185,8 @@ public class AdminService {
                 .mapToInt(order -> Math.max(order.getTotal_amount(), order.getPaidAmount()))
                 .sum();
 
-        List<OrderSummaryDto> orderList = orderEntityList.stream()
+        List<Order> allOrderList = orderRepository.findAllByAdminIdAndDate(admin.getId(), date);
+        List<OrderSummaryDto> orderList = allOrderList.stream()
                 .map(order -> {
                     List<OrderMenuDto> menuList = order.getCartList().stream()
                             .map(cart -> {

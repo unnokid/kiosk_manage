@@ -12,4 +12,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
 
     @Query("select o from Order o where o.admin.id = :adminId and function('date', o.createDate) = :date and o.status = 'Y'")
     List<Order> findByAdminIdAndDate(@Param("adminId") Long adminId, @Param("date") LocalDate date);
+
+    @Query("select o from Order o where o.admin.id = :adminId and function('date', o.createDate) = :date")
+    List<Order> findAllByAdminIdAndDate(@Param("adminId") Long adminId, @Param("date") LocalDate date);
 }
