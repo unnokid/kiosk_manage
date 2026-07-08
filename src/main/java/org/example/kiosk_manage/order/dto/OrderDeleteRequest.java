@@ -10,5 +10,5 @@ import lombok.Getter;
 public class OrderDeleteRequest {
 
     private String email;
-    private Long OrderId;
+    private Long orderId;
 }
