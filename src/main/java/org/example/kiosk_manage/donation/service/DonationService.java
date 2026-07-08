@@ -59,6 +59,6 @@ public class DonationService {
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("해당 찬조값을 가진 데이터가 존재하지 않습니다."));
 
-        donationRepository.delete(donation);
+        donation.cancel();
     }
 }

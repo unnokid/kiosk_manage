@@ -234,16 +234,18 @@ public class AdminService {
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
 
-        List<Donation> donationList = donationRepository.findByAdminIdAndDate(admin.getId(),date);
+        List<Donation> donationList = donationRepository.findByAdminIdAndDate(admin.getId(), date);
         int totalDonationCount = donationList.size();
         int totalDonationAmount = donationList.stream()
                 .mapToInt(Donation::getAmount).sum();
+
+        List<Donation> allDonationList = donationRepository.findAllByAdminIdAndDate(admin.getId(), date);
 
         return AdminDonationSummaryResponse
                 .builder()
                 .totalDonationCount(totalDonationCount)
                 .totalDonationAmount(totalDonationAmount)
-                .donationList(donationList)
+                .donationList(allDonationList)
                 .build();
     }
 }

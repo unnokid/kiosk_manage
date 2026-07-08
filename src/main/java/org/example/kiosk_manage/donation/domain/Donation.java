@@ -24,12 +24,18 @@ public class Donation extends BaseEntity {
 
     private String name;
 
+    private String status;
+    
     private int amount;
 
     @ManyToOne
     @JoinColumn(name = "admin_id")
     @JsonIgnore
     private Admin admin;
+
+    public void cancel() {
+        this.status = "N";
+    }
 
     public void addAdmin(Admin admin) {
         if (Objects.isNull(admin)) {
