@@ -44,6 +44,7 @@ public class DonationService {
                 .donationNo(nextNo)
                 .name(request.getName())
                 .amount(request.getAmount())
+                .status("Y")
                 .admin(admin)
                 .build());
     }
