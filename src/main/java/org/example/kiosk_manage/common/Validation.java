@@ -4,7 +4,6 @@ import org.example.kiosk_manage.common.exception.BadRequestException;
 
 public class Validation {
 
-    private static final String EMAIL_PATTERN = "^[a-zA-Z0-9+-\\_.]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$";
     private static final String PASSWORD_PATTERN = "^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[$`~!@$!%*#^?&\\(\\)\\-_=+]).{8,15}$";
 
     public static boolean validatePassword(String password) {
@@ -30,9 +29,6 @@ public class Validation {
     public static boolean validateEmail(String email) {
         if (email == null || email.isBlank()) {
             throw new BadRequestException("이메일은 필수입니다.");
-        }
-        if (!email.matches(EMAIL_PATTERN)) {
-            throw new BadRequestException("이메일 양식은 (영문+숫자)@(영문+숫자).(영문+숫자) 형식이 되어야 합니다.");
         }
         return true;
     }
