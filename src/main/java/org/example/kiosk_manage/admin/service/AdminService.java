@@ -121,6 +121,7 @@ public class AdminService {
                             .toList();
 
                     return new OrderSummaryDto(
+                            order.getId(),
                             order.getOrderNo(),
                             order.getCreateDate().toString(),
                             order.getStatus(),
@@ -210,6 +211,7 @@ public class AdminService {
                             .toList();
 
                     return new OrderSummaryDto(
+                            order.getId(),
                             order.getOrderNo(),
                             order.getCreateDate().toString(),
                             order.getStatus(),

@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderSummaryDto {
+    private Long id;
     private int orderNo;
     private String createDate;
     private String status;
