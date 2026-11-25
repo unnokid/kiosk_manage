@@ -7,9 +7,12 @@ import org.example.kiosk_manage.admin.repository.AdminRepository;
 import org.example.kiosk_manage.order.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
@@ -150,6 +153,26 @@ class KioskApiTests {
     void categoryOfAnotherStoreCannotBeUsed() throws Exception {
         long categoryB = createCategory(storeB, "음료");
         assertEquals(400, send("/menu/plus", menuBody(storeA, "커피", categoryB, "[]")).getStatus());
+    }
+
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void categoryWithMenuCannotBeDeletedAndIsNotLoggedAsServerError(CapturedOutput output) throws Exception {
+        long menu = createMenu(storeA, "커피", "[]");
+        long category = read("/category/all", storeA).get(0).get("id").asLong();
+        String body = "{\"email\":\"%s\",\"categoryId\":%d}".formatted(storeA, category);
+
+        MockHttpServletResponse rejected = send("/category/minus", body);
+        assertEquals(400, rejected.getStatus());
+        assertEquals("삭제 불가: 메뉴가 존재합니다.",
+                json.readTree(rejected.getContentAsString(StandardCharsets.UTF_8)).get("message").asText());
+        assertEquals(1, read("/category/all", storeA).size());
+        assertTrue(output.getAll().contains("[BadRequest]"));
+        assertFalse(output.getAll().contains("[IllegalState]"));
+
+        ok(send("/menu/minus", "{\"email\":\"%s\",\"menuId\":%d}".formatted(storeA, menu)));
+        ok(send("/category/minus", body));
+        assertEquals(0, read("/category/all", storeA).size());
     }
 
     @Test

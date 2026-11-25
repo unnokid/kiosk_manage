@@ -77,7 +77,7 @@ public class CategoryService {
         boolean hasActiveMenus = category.getMenuList().stream()
                 .anyMatch(Menu::isActive);
         if (hasActiveMenus) {
-            throw new IllegalStateException("삭제 불가: 메뉴가 존재합니다.");
+            throw new BadRequestException("삭제 불가: 메뉴가 존재합니다.");
         }
 
         category.deactivate();
