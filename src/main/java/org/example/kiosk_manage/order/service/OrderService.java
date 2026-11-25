@@ -1,5 +1,7 @@
 package org.example.kiosk_manage.order.service;
 
+import org.springframework.transaction.annotation.Isolation;
+import java.util.Optional;
 import org.example.kiosk_manage.admin.domain.Admin;
 import org.example.kiosk_manage.admin.domain.AdminOrderSeq;
 import org.example.kiosk_manage.admin.repository.AdminOrderSeqRepository;
@@ -42,7 +44,8 @@ public class OrderService {
         this.adminOrderSeqRepository = adminOrderSeqRepository;
     }
 
-    @Transactional
+    // READ_COMMITTED: 채번 락을 기다리는 동안 먼저 커밋된 같은 요청의 주문을 볼 수 있어야 한다
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public OrderSaveResponse plus(OrderSaveRequest request) {
 
         Admin admin = adminRepository.findByEmail(request.getEmail())
@@ -51,14 +54,24 @@ public class OrderService {
         adminOrderSeqRepository.initIfAbsent(admin.getId());
 
         AdminOrderSeq seq = adminOrderSeqRepository.findForUpdate(admin.getId()).orElseThrow();
-        int nextNo = seq.issue();
 
+        // 이미 접수된 요청이 다시 온 경우: 새로 저장하지 않고 기존 주문을 돌려준다
+        String requestId = normalize(request.getRequestId());
+        if (requestId != null) {
+            Optional<Order> saved = orderRepository.findByAdminIdAndRequestId(admin.getId(), requestId);
+            if (saved.isPresent()) {
+                return toResponse(saved.get());
+            }
+        }
+
+        int nextNo = seq.issue();
 
         //Order 객체 생성
         Order order = Order.builder()
                 .status("Y")
                 .admin(admin)
                 .orderNo(nextNo)
+                .requestId(requestId)
                 .paidAmount(request.getPaidAmount())
                 .payment(parsePayment(request.getPayment()))
                 .cartList(new ArrayList<>())
@@ -70,6 +83,9 @@ public class OrderService {
                     .orElseThrow(() -> new BadRequestException("해당 메뉴는 존재하지 않습니다."));
             if (!menu.isActive()) {
                 throw new BadRequestException("삭제된 메뉴는 주문할 수 없습니다.");
+            }
+            if (!isOwnedBy(menu, admin)) {
+                throw new BadRequestException("해당 메뉴는 존재하지 않습니다.");
             }
 
             //메뉴가격
@@ -113,11 +129,24 @@ public class OrderService {
 //        }
 
 
-        Order or = orderRepository.save(order);
+        return toResponse(orderRepository.save(order));
+    }
+
+    private OrderSaveResponse toResponse(Order order) {
         return OrderSaveResponse.builder()
-                .orderNo(or.getOrderNo())
-                .createdt(or.getCreateDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .orderNo(order.getOrderNo())
+                .createdt(order.getCreateDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build();
+    }
+
+    private String normalize(String requestId) {
+        return requestId == null || requestId.isBlank() ? null : requestId.trim();
+    }
+
+    private boolean isOwnedBy(Menu menu, Admin admin) {
+        return menu.getCategory() != null
+                && menu.getCategory().getAdmin() != null
+                && menu.getCategory().getAdmin().getId().equals(admin.getId());
     }
 
     private Payment parsePayment(String value) {

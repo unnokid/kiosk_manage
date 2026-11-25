@@ -1,5 +1,6 @@
 package org.example.kiosk_manage.admin.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.example.kiosk_manage.admin.domain.Admin;
 import org.example.kiosk_manage.admin.dto.*;
 import org.example.kiosk_manage.admin.repository.AdminRepository;
@@ -31,10 +32,13 @@ public class AdminService {
 
     private final DonationRepository donationRepository;
 
-    public AdminService(AdminRepository adminRepository, OrderRepository orderRepository, DonationRepository donationRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public AdminService(AdminRepository adminRepository, OrderRepository orderRepository, DonationRepository donationRepository, PasswordEncoder passwordEncoder) {
         this.adminRepository = adminRepository;
         this.orderRepository = orderRepository;
         this.donationRepository = donationRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public void save(AdminSignupRequest request) {
@@ -50,7 +54,7 @@ public class AdminService {
 
         adminRepository.save(Admin.builder()
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .build());
     }
@@ -58,7 +62,8 @@ public class AdminService {
     public void login(AdminLoginRequest request) {
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("아이디가 잘못 입력되었습니다."));
-        if (!admin.matchPassword(request.getPassword())) {
+        if (request.getPassword() == null
+                || !passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
             throw new BadRequestException("아이디가 잘못 입력되었습니다.");
         }
     }

@@ -14,7 +14,8 @@ import java.util.Objects;
 @Entity
 @Table(name = "orders",
         uniqueConstraints = {
-                @UniqueConstraint(name="uk_admin_orderno", columnNames = {"admin_id", "order_no"})
+                @UniqueConstraint(name="uk_admin_orderno", columnNames = {"admin_id", "order_no"}),
+                @UniqueConstraint(name="uk_admin_requestid", columnNames = {"admin_id", "request_id"})
         })
 @Getter
 @AllArgsConstructor
@@ -28,6 +29,10 @@ public class Order extends BaseEntity {
 
     @Column(name = "order_no", nullable = false)
     private int orderNo;
+
+    // 재전송된 주문을 구분하는 값 (구버전 앱은 null)
+    @Column(name = "request_id", length = 64)
+    private String requestId;
 
     private String status;
 

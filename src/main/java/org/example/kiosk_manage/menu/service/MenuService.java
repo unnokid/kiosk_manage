@@ -59,6 +59,9 @@ public class MenuService {
 
         //카테고리 연동
         Category category = categoryRepository.findById(request.getCategoryId())
+                .filter(c -> c.isActive()
+                        && c.getAdmin() != null
+                        && c.getAdmin().getId().equals(admin.getId()))
                 .orElseThrow(() -> new BadRequestException("요청하신 카테고리 값이 존재하지 않습니다."));
 
         //메뉴 객체 생성
@@ -71,8 +74,9 @@ public class MenuService {
                 .menuOptionList(new ArrayList<>())
                 .build();
 
-        //요청된 메뉴 옵션 연동
-        for (MenuOptionSaveRequest m : request.getOptions()) {
+        //요청된 메뉴 옵션 연동 (옵션이 없는 메뉴도 허용)
+        List<MenuOptionSaveRequest> options = request.getOptions() != null ? request.getOptions() : List.of();
+        for (MenuOptionSaveRequest m : options) {
             MenuOption menuOption = MenuOption
                     .builder()
                     .optionName(m.getOption())

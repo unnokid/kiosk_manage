@@ -35,8 +35,11 @@ public class OrderController {
     }
 
     @PostMapping("/{orderNo}/print-fail")
-    public ResponseEntity<Void> printFail(@PathVariable int orderNo) {
-        log.warn("[프린터 실패] orderNo={}", orderNo);
+    public ResponseEntity<Void> printFail(@PathVariable int orderNo,
+                                          @RequestParam(required = false) String email) {
+        // 줄바꿈을 제거해 로그 위조를 막는다
+        String store = email == null ? "-" : email.replaceAll("[\\r\\n]", "_");
+        log.warn("[프린터 실패] email={}, orderNo={}", store, orderNo);
         return ResponseEntity.ok().build();
     }
 }

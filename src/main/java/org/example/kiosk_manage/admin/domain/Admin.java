@@ -24,6 +24,7 @@ public class Admin extends BaseEntity {
 
     private String email;
 
+    // BCrypt 해시
     private String password;
 
     private String name;
@@ -40,11 +41,6 @@ public class Admin extends BaseEntity {
     @Builder.Default
     private List<Category> categoryList = new ArrayList<>();
 
-
-    public boolean matchPassword(String password){
-        //일단 기본적인 문자열 비교 -> 이후에 암호화된 비밀번호로 체크할것
-        return this.password.equals(password) ;
-    }
 
     public void addDonation(Donation donation) {
         this.donationList.add(donation);
