@@ -12,6 +12,7 @@ import org.example.kiosk_manage.menu.domain.MenuOption;
 import org.example.kiosk_manage.menu.dto.*;
 import org.example.kiosk_manage.menu.repository.MenuRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -40,10 +41,11 @@ public class MenuService {
         this.menuRepository = menuRepository;
     }
 
-    @Transactional
+    // READ_COMMITTED: 잠금을 기다리는 동안 먼저 저장된 내용을 볼 수 있어야 한다
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void plus(MenuSaveRequest request) {
 
-        Admin admin = adminRepository.findByEmail(request.getEmail())
+        Admin admin = adminRepository.findByEmailForUpdate(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
 

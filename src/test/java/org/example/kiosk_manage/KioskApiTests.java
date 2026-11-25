@@ -16,9 +16,11 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -143,6 +145,66 @@ class KioskApiTests {
     }
 
     @Test
+    void sameEmailSignedUpConcurrentlyIsSavedOnce() throws Exception {
+        String email = UUID.randomUUID() + "@test.com";
+        String body = "{\"email\":\"%s\",\"password\":\"%s\",\"passwordCheck\":\"%s\",\"name\":\"매장\"}"
+                .formatted(email, PASSWORD, PASSWORD);
+        List<Integer> codes = statusesOf(() -> send("/admin/signup", body));
+        assertEquals(1, Collections.frequency(codes, 200), codes.toString());
+        assertEquals(3, Collections.frequency(codes, 400), codes.toString());
+        assertEquals(0, read("/menu/all", email).size());
+    }
+
+    @Test
+    void sameMenuOrCategoryAddedConcurrentlyIsSavedOnce() throws Exception {
+        List<Integer> categories = statusesOf(() -> send("/category/plus",
+                "{\"email\":\"%s\",\"name\":\"음료\"}".formatted(storeA)));
+        assertEquals(1, Collections.frequency(categories, 200), categories.toString());
+        assertEquals(3, Collections.frequency(categories, 400), categories.toString());
+
+        long category = read("/category/all", storeA).get(0).get("id").asLong();
+        List<Integer> menus = statusesOf(() -> send("/menu/plus", menuBody(storeA, "커피", category, "[]")));
+        assertEquals(1, Collections.frequency(menus, 200), menus.toString());
+        assertEquals(1, read("/menu/all", storeA).size());
+    }
+
+    @Test
+    void sameDonationRequestIdIsSavedOnce() throws Exception {
+        String requestId = UUID.randomUUID().toString();
+        ok(donate(storeA, null)); // 구버전 앱, 채번 행 생성
+        ok(donate(storeA, null));
+        for (int code : statusesOf(() -> donate(storeA, requestId))) assertEquals(200, code);
+        ok(donate(storeA, requestId));
+        ok(donate(storeA, UUID.randomUUID().toString()));
+        ok(donate(storeB, requestId)); // 다른 매장은 독립
+
+        JsonNode listA = read("/admin/summary/donation", storeA).get("donationList");
+        assertEquals(4, listA.size());
+        assertNull(listA.get(0).get("requestId"));
+        assertEquals(1, read("/admin/summary/donation", storeB).get("donationList").size());
+        assertEquals(400, donate(storeA, "x".repeat(65)).getStatus());
+    }
+
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void errorResponsesUseProperStatusAndHideInternals(CapturedOutput output) throws Exception {
+        assertError(404, "존재하지 않는 주소입니다.", get("/api/v1/nowhere"));
+        assertError(405, "지원하지 않는 요청 방식입니다.", get("/api/v1/order/plus"));
+        assertError(400, "잘못된 요청입니다.", get("/api/v1/menu/all"));
+        assertError(400, "요청 형식이 올바르지 않습니다.", post("/api/v1/order/plus")
+                .contentType(MediaType.APPLICATION_JSON).content("{broken"));
+        assertError(400, "요청 형식이 올바르지 않습니다.", post("/api/v1/order/abc/print-fail"));
+        assertError(415, "지원하지 않는 데이터 형식입니다.", post("/api/v1/order/plus")
+                .contentType(MediaType.TEXT_PLAIN).content("x"));
+        assertFalse(output.getAll().contains("[UnhandledException]"));
+
+        // 내부 오류는 로그에만 남는다 (categoryId 누락)
+        assertError(500, "서버 오류가 발생했습니다.", post("/api/v1/menu/plus")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"" + storeA + "\",\"name\":\"x\"}"));
+        assertTrue(output.getAll().contains("[UnhandledException]"));
+    }
+
+    @Test
     void menuOfAnotherStoreCannotBeOrdered() throws Exception {
         long menuB = createMenu(storeB, "커피", "[]");
         assertEquals(400, order(storeA, menuB, null).getStatus());
@@ -210,6 +272,29 @@ class KioskApiTests {
         ok(send("/admin/signup", "{\"email\":\"%s\",\"password\":\"%s\",\"passwordCheck\":\"%s\",\"name\":\"매장\"}"
                 .formatted(email, PASSWORD, PASSWORD)));
         return email;
+    }
+
+    private MockHttpServletResponse donate(String email, String requestId) throws Exception {
+        String id = requestId == null ? "" : "\"requestId\":\"" + requestId + "\",";
+        return send("/donation/plus", "{%s\"email\":\"%s\",\"name\":\"찬조\",\"amount\":1000}".formatted(id, email));
+    }
+
+    /** 같은 요청 4개를 동시에 보낸 상태 코드 */
+    private List<Integer> statusesOf(Callable<MockHttpServletResponse> call) throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(4);
+        List<Integer> codes = new ArrayList<>();
+        for (Future<MockHttpServletResponse> f : pool.invokeAll(Collections.nCopies(4, call))) {
+            codes.add(f.get().getStatus());
+        }
+        pool.shutdown();
+        return codes;
+    }
+
+    private void assertError(int status, String message, MockHttpServletRequestBuilder request) throws Exception {
+        MockHttpServletResponse response = mvc.perform(request.header("X-DEV-PASS", "test-pass"))
+                .andReturn().getResponse();
+        assertEquals(status, response.getStatus());
+        assertEquals(message, json.readTree(response.getContentAsString(StandardCharsets.UTF_8)).get("message").asText());
     }
 
     private long createCategory(String email, String name) throws Exception {

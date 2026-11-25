@@ -10,6 +10,7 @@ import org.example.kiosk_manage.donation.dto.DonationDeleteRequest;
 import org.example.kiosk_manage.donation.dto.DonationSaveRequest;
 import org.example.kiosk_manage.donation.repository.DonationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -25,7 +26,8 @@ public class DonationService {
         this.adminDonationSeqRepository = adminDonationSeqRepository;
     }
 
-    @Transactional
+    // READ_COMMITTED: 채번 락을 기다리는 동안 먼저 커밋된 같은 요청의 찬조를 볼 수 있어야 한다
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void plus(DonationSaveRequest request) {
 
         Admin admin = adminRepository.findByEmail(request.getEmail())
@@ -38,15 +40,26 @@ public class DonationService {
         AdminDonationSeq seq = adminDonationSeqRepository.findForUpdate(admin.getId())
                 .orElseThrow(); // 여기서 없어지면 이상한 케이스
 
+        // 이미 등록된 요청이 다시 온 경우: 새로 저장하지 않는다
+        String requestId = normalize(request.getRequestId());
+        if (requestId != null && donationRepository.existsByAdminIdAndRequestId(admin.getId(), requestId)) {
+            return;
+        }
+
         int nextNo = seq.issue();
 
         donationRepository.save(Donation.builder()
                 .donationNo(nextNo)
+                .requestId(requestId)
                 .name(request.getName())
                 .amount(request.getAmount())
                 .status("Y")
                 .admin(admin)
                 .build());
+    }
+
+    private String normalize(String requestId) {
+        return requestId == null || requestId.isBlank() ? null : requestId.trim();
     }
 
     @Transactional

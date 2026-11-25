@@ -13,6 +13,7 @@ import org.example.kiosk_manage.common.exception.BadRequestException;
 import org.example.kiosk_manage.donation.domain.Donation;
 import org.example.kiosk_manage.menu.domain.Menu;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -43,9 +44,10 @@ public class CategoryService {
 
     }
 
-    @Transactional
+    // READ_COMMITTED: 잠금을 기다리는 동안 먼저 저장된 내용을 볼 수 있어야 한다
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void plus(CategorySaveRequest request) {
-        Admin admin = adminRepository.findByEmail(request.getEmail())
+        Admin admin = adminRepository.findByEmailForUpdate(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
         boolean check = admin.getCategoryList().stream()
@@ -63,10 +65,11 @@ public class CategoryService {
                 .build());
     }
 
-    @Transactional
+    // READ_COMMITTED: 잠금을 기다리는 동안 먼저 저장된 내용을 볼 수 있어야 한다
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void minus(CategoryDeleteRequest request) {
 
-        Admin admin = adminRepository.findByEmail(request.getEmail())
+        Admin admin = adminRepository.findByEmailForUpdate(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("해당 아이디를 가진 고객이 존재하지 않습니다."));
 
         Category category = admin.getCategoryList().stream()

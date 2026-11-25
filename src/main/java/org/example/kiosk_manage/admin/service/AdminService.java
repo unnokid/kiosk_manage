@@ -14,6 +14,7 @@ import org.example.kiosk_manage.order.domain.Payment;
 import org.example.kiosk_manage.order.dto.OrderMenuDto;
 import org.example.kiosk_manage.order.dto.OrderSummaryDto;
 import org.example.kiosk_manage.order.repository.OrderRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AdminService {
+
+    private static final String DUPLICATE_EMAIL = "요청하신 이메일 존재 합니다. 다시 요청 해주세요.";
 
     private final AdminRepository adminRepository;
 
@@ -49,14 +52,19 @@ public class AdminService {
         Validation.matchPassword(request.getPassword(), request.getPasswordCheck());
 
         if (adminRepository.existsAdminByEmail(request.getEmail())) {
-            throw new BadRequestException("요청하신 이메일 존재 합니다. 다시 요청 해주세요.");
+            throw new BadRequestException(DUPLICATE_EMAIL);
         }
 
-        adminRepository.save(Admin.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .build());
+        try {
+            adminRepository.save(Admin.builder()
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .name(request.getName())
+                    .build());
+        } catch (DataIntegrityViolationException e) {
+            // 같은 이메일의 가입이 동시에 들어온 경우 (unique 제약)
+            throw new BadRequestException(DUPLICATE_EMAIL);
+        }
     }
 
     public void login(AdminLoginRequest request) {

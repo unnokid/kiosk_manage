@@ -3,6 +3,7 @@ package org.example.kiosk_manage.donation.controller;
 import org.example.kiosk_manage.donation.dto.DonationDeleteRequest;
 import org.example.kiosk_manage.donation.dto.DonationSaveRequest;
 import org.example.kiosk_manage.donation.service.DonationService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +21,7 @@ public class DonationController {
     }
 
     @PostMapping("/plus")
-    public ResponseEntity<Void> plus(@RequestBody DonationSaveRequest request) {
+    public ResponseEntity<Void> plus(@RequestBody @Valid DonationSaveRequest request) {
         donationService.plus(request);
 
         return ResponseEntity.ok().build();
