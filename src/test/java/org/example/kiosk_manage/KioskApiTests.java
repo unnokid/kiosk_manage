@@ -260,9 +260,18 @@ class KioskApiTests {
     }
 
     @Test
-    void printFailAcceptsOldAndNewApp() throws Exception {
+    @ExtendWith(OutputCaptureExtension.class)
+    void printFailAcceptsOldAndNewApp(CapturedOutput output) throws Exception {
         ok(send("/order/1/print-fail", ""));
         ok(send("/order/1/print-fail?email=" + storeA, ""));
+        assertTrue(output.getAll().contains("orderNo=1, type=ORDER"));
+        // 영수증 종류를 함께 남기고, 로그를 꾸밀 수 있는 글자는 지운다
+        ok(send("/order/2/print-fail?email=" + storeA + "&type=CANCEL-1;x", ""));
+        assertTrue(output.getAll().contains("orderNo=2, type=CANCELx"));
+        // 너무 긴 값은 앞 20자만 남긴다
+        ok(send("/order/3/print-fail?email=" + storeA + "&type=" + "A".repeat(50), ""));
+        assertTrue(output.getAll().contains("orderNo=3, type=" + "A".repeat(20) + "\n")
+                || output.getAll().contains("orderNo=3, type=" + "A".repeat(20) + "\r\n"));
     }
 
     // ---------------------------------------------------------------- helpers

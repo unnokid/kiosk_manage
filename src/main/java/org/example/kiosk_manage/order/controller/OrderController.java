@@ -36,10 +36,15 @@ public class OrderController {
 
     @PostMapping("/{orderNo}/print-fail")
     public ResponseEntity<Void> printFail(@PathVariable int orderNo,
-                                          @RequestParam(required = false) String email) {
+                                          @RequestParam(required = false) String email,
+                                          @RequestParam(required = false) String type) {
         // 줄바꿈을 제거해 로그 위조를 막는다
         String store = email == null ? "-" : email.replaceAll("[\\r\\n]", "_");
-        log.warn("[프린터 실패] email={}, orderNo={}", store, orderNo);
+        // 영수증 종류: ORDER(주문) / REPRINT(재출력) / CANCEL(취소). 예전 앱은 보내지 않는다.
+        // 로그가 길어지지 않도록 앞 20자만 남긴다
+        String kind = type == null ? "ORDER" : type.replaceAll("[^A-Za-z_]", "");
+        if (kind.length() > 20) kind = kind.substring(0, 20);
+        log.warn("[프린터 실패] email={}, orderNo={}, type={}", store, orderNo, kind);
         return ResponseEntity.ok().build();
     }
 }
